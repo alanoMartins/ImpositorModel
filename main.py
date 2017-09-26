@@ -45,7 +45,7 @@ def GMMPartial(x, lam):
 # X é a lista dos arrays de cada gaussiana
 def EEM(X):
     for d in data:
-        mean = kmeans(d)
+        yield kmeans(d)
     # kmeans = KMeans(n_clusters=Ng, random_state=0)
     # kmeans.fit(X)
     # y_pred = kmeans.predict([41,21,5, 1, 24,2])
@@ -58,17 +58,18 @@ def kmeans(X):
     ng = []
     Yi = []
     for g in range(0, Ng):
-      Ug.append(random.randrange(1, Nv))
+      Ug.append(random.randint(1, Nv))
     loop = 1
     endloop = 10
     finished = False
     while not finished:
+        Yi.clear()
+        ng.clear()
         for i in range(0, Nv):
-            ming = 0
+            ming = []
             for g in range(0, Ng):
-                if(ming > abs(Ug[g] - X[i])):
-                    ming = abs(Ug[g] - X[i])
-            Yi.append(ming)
+                ming.append(abs(Ug[g] - X[i]))
+            Yi.append(min(ming))
         ug = []
         for g in range(0, Ng):
             gf = []
@@ -102,7 +103,7 @@ def kmeans(X):
         eg.append( (1/Ng) * functools.reduce(lambda x,y: x + y, egtemp))
 
 
-    return (max(Ug), mg, eg)
+    return (Ug, mg, eg)
 
 def EEM(X):
     for d in data:

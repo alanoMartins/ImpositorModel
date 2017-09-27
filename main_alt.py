@@ -13,9 +13,6 @@ import decimal
 from numpy import linalg as LA
 
 
-# data = [[2, 51, 24, 25, 2, 41], #Cada array, uma classe
-#         [24, 45, 42, 62, 86, 22],
-#         [91, 15, 19, 79, 46, 18, 71]]
 
 Ng = 3
 #Nv = len(data[0])
@@ -24,9 +21,16 @@ def kmeans_gauss(X):
     return ([2,4,1], [5,1,2], [2,1 ,2])
 
 def gauss(x, u, e):
-    D = 2
-    p1 = 1 / (2 * math.pi)**(D/2) * (abs(e) ** 1/2)
-    p2 = (-1/2)*(((x-u) / e) ** 2)
+    D = len(x)
+    det = np.linalg.det(e)
+    p1 = 1 / (2 * math.pi)**(D/2) * (np.sqrt(det))
+
+    auxE = np.asmatrix(e)
+    invE = np.linalg.inv(e)
+    x = x.reshape(4, 1)
+    aux1 = np.dot(x.T, invE)
+    inv_aux = np.dot(aux1, x)
+    p2 = (-1/2) * inv_aux.reshape(1,1)
     return p1 * math.exp(p2)
 
 def weighted_gauss(x, m, u, e):
@@ -52,8 +56,27 @@ def log_sum_p(X, lam):
 
 def GMM(X):
     l = kmeans_manual(X)
-    lam = EMM(X, l)
+    lam = max_EMM(X, l)
     return (1 / len(X) * math.log(log_sum_p(X, lam)))
+
+def get_prob(X, lamb):
+    acc = []
+    for i in range(0, len(X)):
+        s = sum_weighted_gauss(X[i], lamb)
+        slog = math.log(s)
+        acc.append(sum_weighted_gauss(X[i], lamb))
+    return sum(acc)
+
+def max_EMM(X, lamb):
+    max_interation = 10
+
+    for i in range(0, max_interation):
+        lamb_new = EMM(X, lamb)
+        if get_prob(X, lamb_new) > get_prob(X, lamb):
+            lamb = lamb_new
+
+
+
 
 def EMM(X, lam):
     new_lam_m = []
@@ -65,26 +88,30 @@ def EMM(X, lam):
         u_arr = lam[1]
         e_arr = lam[2]
 
-
+        lgg = []
         for i in range(0, len(X)):
             aux1 = weighted_gauss(X[i], m_arr[g], u_arr[g], e_arr[g])
             aux2 = sum_weighted_gauss(X[i], lam)
-            Lgi.append(aux1 / aux2)
+            lgg.append(aux1 / aux2)
+        Lgi.append(lgg)
 
     for g in range(0, Ng):
-        Lg = sum(Lgi)
+        Lg = sum(Lgi[g])
         mg = Lg / len(X)
 
         ug_arr = []
         for i in range(0, len(X)):
-            ug_arr.append(X[i] * Lgi[i])
+            ug_arr.append(X[i] * Lgi[g][i])
 
         ug = (1/Lg * sum(ug_arr))
 
         sigG_arr = []
         for i in range(0, len(X)):
-            sigG_arr.append((X[i] - ug) * Lgi[i])
-        sigG = sum(sigG_arr)
+            outer_x = np.outer(X[i], X[i])
+            sigG_arr.append(outer_x * Lgi[g][i])
+        outer_u = np.outer(ug, ug)
+        sigG =  (1 / Lg) * np.dot(sum(sigG_arr), outer_u)
+        sigG = np.asmatrix(sigG)
 
         new_lam_m.append(mg)
         new_lam_u.append(ug)
@@ -104,7 +131,7 @@ def kmeans_manual(X):
     ng = []
     Yi = []
     for g in range(0, Ng):
-        ix = random.randint(0, Ng)
+        ix = random.randint(0, Nv)
         Ug.append(X[ix])
     loop = 1
     endloop = 10
@@ -116,7 +143,8 @@ def kmeans_manual(X):
             ming = Ng + 1
             minValue = 100
             for g in range(0, Ng):
-                aux = LA.norm(Ug[g] - X[i])
+                vectAux = Ug[g] - X[i]
+                aux = LA.norm(vectAux)
                 if (minValue > aux):
                     minValue = aux
                     ming = g
@@ -134,7 +162,7 @@ def kmeans_manual(X):
 
         same = True
         for g in range(0, Ng):
-            if Ug[g] != ug[g]:
+            if np.array_equal(Ug[g], ug[g]):
                 same = False
 
         loop = loop + 1
@@ -151,10 +179,16 @@ def kmeans_manual(X):
         mg.append(ng[g] / Nv)
         egtemp = []
         for i in range(0, Nv):
-            egtemp.append(Yi[i] * (X[i] - ug[g] * (X[i] - ug[g])))
+            aux = X[i] - Ug[g]
+            outer_prod = np.outer(aux, aux)
+            outer_prod = np.asmatrix(outer_prod)
+            egtemp.append(outer_prod * Yi[i])
         eg.append((1 / Ng) * sum(egtemp))
 
+
+
     return mg, Ug, eg
+
 
 
 def exec():
@@ -163,43 +197,57 @@ def exec():
     c1 = data[50:100]
     c2 = data[100:150]
 
-    c0at0 = np.array(c0[:, [0]]).flatten()
-    c0at1 = np.array(c0[:, [1]]).flatten()
-    c0at2 = np.array(c0[:, [2]]).flatten()
-    c0at3 = np.array(c0[:, [3]]).flatten()
-
-    c0_arr = [c0at0, c0at1, c0at2 ,c0at3]
-
-    c1at0 = np.array(c1[:, [0]]).flatten()
-    c1at1 = np.array(c1[:, [1]]).flatten()
-    c1at2 = np.array(c1[:, [2]]).flatten()
-    c1at3 = np.array(c1[:, [3]]).flatten()
-
-    c1_arr = [c1at0, c1at1, c1at2, c1at3]
-
-    c2at0 = np.array(c2[:, [0]]).flatten()
-    c2at1 = np.array(c2[:, [1]]).flatten()
-    c2at2 = np.array(c2[:, [2]]).flatten()
-    c2at3 = np.array(c2[:, [3]]).flatten()
-
-    c2_arr = [c2at0, c2at1, c2at2, c2at3]
-
-    model0_arr = [GMM(np.array(c_aux)) for c_aux in c1_arr]
-    model0 = sum(model0_arr)
-
-    model1_arr = [GMM(np.array(c_aux)) for c_aux in c1_arr]
-    model1 = sum(model1_arr)
-
-    model2_arr = [GMM(np.array(c_aux)) for c_aux in c1_arr]
-    model2 = sum(model2_arr)
-
-    print(model0)
-    print(model1)
-    print(model2)
-
-    d1 = np.array(c0at0).flatten()
-    print(d1)
+    d1 = np.array(c0)
+    print(c0)
     r = GMM(d1)
-    print(r)
+    #print(r)
+
+
+
+
+# def exec():
+#     data, target = load_iris(True)
+#     c0 = data[0:50]
+#     c1 = data[50:100]
+#     c2 = data[100:150]
+#
+#     c0at0 = c0[:, [0]]
+#     c0at1 = c0[:, [1]]
+#     c0at2 = c0[:, [2]]
+#     c0at3 = c0[:, [3]]
+#
+#     c0_arr = [c0at0, c0at1, c0at2 ,c0at3]
+#
+#     c1at0 = c1[:, [0]]
+#     c1at1 = c1[:, [1]]
+#     c1at2 = c1[:, [2]]
+#     c1at3 = c1[:, [3]]
+#
+#     c1_arr = [c1at0, c1at1, c1at2, c1at3]
+#
+#     c2at0 = c2[:, [0]]
+#     c2at1 = c2[:, [1]]
+#     c2at2 = c2[:, [2]]
+#     c2at3 = c2[:, [3]]
+#
+#     c2_arr = [c2at0, c2at1, c2at2, c2at3]
+#
+#     model0_arr = [GMM(np.array(c_aux)) for c_aux in c1_arr]
+#     model0 = sum(model0_arr)
+#
+#     model1_arr = [GMM(np.array(c_aux)) for c_aux in c1_arr]
+#     model1 = sum(model1_arr)
+#
+#     model2_arr = [GMM(np.array(c_aux)) for c_aux in c1_arr]
+#     model2 = sum(model2_arr)
+#
+#     print(model0)
+#     print(model1)
+#     print(model2)
+#
+#     d1 = np.array(c0at0).flatten()
+#     print(d1)
+#     r = GMM(d1)
+#     print(r)
 
 exec()

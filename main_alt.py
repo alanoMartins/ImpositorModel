@@ -62,8 +62,6 @@ def GMM(X):
 def get_prob(X, lamb):
     acc = []
     for i in range(0, len(X)):
-        s = sum_weighted_gauss(X[i], lamb)
-        slog = math.log(s)
         acc.append(sum_weighted_gauss(X[i], lamb))
     return sum(acc)
 
@@ -74,8 +72,6 @@ def max_EMM(X, lamb):
         lamb_new = EMM(X, lamb)
         if get_prob(X, lamb_new) > get_prob(X, lamb):
             lamb = lamb_new
-
-
 
 
 def EMM(X, lam):
@@ -190,7 +186,6 @@ def kmeans_manual(X):
     return mg, Ug, eg
 
 
-
 def exec():
     data, target = load_iris(True)
     c0 = data[0:50]
@@ -200,54 +195,6 @@ def exec():
     d1 = np.array(c0)
     print(c0)
     r = GMM(d1)
-    #print(r)
 
-
-
-
-# def exec():
-#     data, target = load_iris(True)
-#     c0 = data[0:50]
-#     c1 = data[50:100]
-#     c2 = data[100:150]
-#
-#     c0at0 = c0[:, [0]]
-#     c0at1 = c0[:, [1]]
-#     c0at2 = c0[:, [2]]
-#     c0at3 = c0[:, [3]]
-#
-#     c0_arr = [c0at0, c0at1, c0at2 ,c0at3]
-#
-#     c1at0 = c1[:, [0]]
-#     c1at1 = c1[:, [1]]
-#     c1at2 = c1[:, [2]]
-#     c1at3 = c1[:, [3]]
-#
-#     c1_arr = [c1at0, c1at1, c1at2, c1at3]
-#
-#     c2at0 = c2[:, [0]]
-#     c2at1 = c2[:, [1]]
-#     c2at2 = c2[:, [2]]
-#     c2at3 = c2[:, [3]]
-#
-#     c2_arr = [c2at0, c2at1, c2at2, c2at3]
-#
-#     model0_arr = [GMM(np.array(c_aux)) for c_aux in c1_arr]
-#     model0 = sum(model0_arr)
-#
-#     model1_arr = [GMM(np.array(c_aux)) for c_aux in c1_arr]
-#     model1 = sum(model1_arr)
-#
-#     model2_arr = [GMM(np.array(c_aux)) for c_aux in c1_arr]
-#     model2 = sum(model2_arr)
-#
-#     print(model0)
-#     print(model1)
-#     print(model2)
-#
-#     d1 = np.array(c0at0).flatten()
-#     print(d1)
-#     r = GMM(d1)
-#     print(r)
 
 exec()

@@ -22,16 +22,19 @@ def kmeans_gauss(X):
 
 def gauss(x, u, e):
     D = len(x)
-    det = np.linalg.det(e)
+    det = abs(np.linalg.det(e))
+    det = round(det,3)
     p1 = 1 / (2 * math.pi)**(D/2) * (np.sqrt(det))
 
-    auxE = np.asmatrix(e)
+    sub = x - u
     invE = np.linalg.inv(e)
-    x = x.reshape(4, 1)
-    aux1 = np.dot(x.T, invE)
-    inv_aux = np.dot(aux1, x)
+    sub = sub.reshape(4, 1)
+    aux1 = np.dot(sub.T, invE)
+    inv_aux = np.dot(aux1, sub)
     p2 = (-1/2) * inv_aux.reshape(1,1)
-    return p1 * math.exp(p2)
+    p2 = p2.item(0)
+    p2 = round(p2, 3)
+    return p1 * math.e ** p2
 
 def weighted_gauss(x, m, u, e):
     return m * gauss(x, u, e)
@@ -69,7 +72,9 @@ def max_EMM(X, lamb):
     max_interation = 10
 
     for i in range(0, max_interation):
+        p_old = get_prob(X, lamb)
         lamb_new = EMM(X, lamb)
+        p_new = get_prob(X, lamb_new)
         if get_prob(X, lamb_new) > get_prob(X, lamb):
             lamb = lamb_new
 
@@ -103,10 +108,10 @@ def EMM(X, lam):
 
         sigG_arr = []
         for i in range(0, len(X)):
-            outer_x = np.outer(X[i], X[i])
+            arr = X[i] - ug
+            outer_x = np.outer(arr, arr)
             sigG_arr.append(outer_x * Lgi[g][i])
-        outer_u = np.outer(ug, ug)
-        sigG =  (1 / Lg) * np.dot(sum(sigG_arr), outer_u)
+        sigG =  (1 / Lg) * sum(sigG_arr)
         sigG = np.asmatrix(sigG)
 
         new_lam_m.append(mg)

@@ -1,17 +1,23 @@
+
+# Observações
+#EMM deve ser interativo, comparando com P(x|lamba), com termino numa quantidade de loops e não modificados
+
+
+
 import numpy as np
 import functools
-import  math
-from sklearn.cluster import KMeans
+import math
 from sklearn.datasets import load_iris
 import random
 import decimal
+from numpy import linalg as LA
 
 
 # data = [[2, 51, 24, 25, 2, 41], #Cada array, uma classe
 #         [24, 45, 42, 62, 86, 22],
 #         [91, 15, 19, 79, 46, 18, 71]]
 
-Ng = 4
+Ng = 3
 #Nv = len(data[0])
 
 def kmeans_gauss(X):
@@ -53,12 +59,13 @@ def EMM(X, lam):
     new_lam_m = []
     new_lam_u = []
     new_lam_e = []
+    Lgi = []
     for g in range(0, Ng):
         m_arr = lam[0]
         u_arr = lam[1]
         e_arr = lam[2]
 
-        Lgi = []
+
         for i in range(0, len(X)):
             aux1 = weighted_gauss(X[i], m_arr[g], u_arr[g], e_arr[g])
             aux2 = sum_weighted_gauss(X[i], lam)
@@ -85,9 +92,9 @@ def EMM(X, lam):
 
     return (new_lam_m, new_lam_u, new_lam_e)
 
-def kmeans(X):
-    kmeans = KMeans(n_clusters=Ng, random_state=0).fit(X)
-    print(kmeans.cluster_centers_)
+# def kmeans(X):
+#     kmeans = KMeans(n_clusters=Ng, random_state=0).fit(X)
+#     print(kmeans.cluster_centers_)
 
 
 
@@ -109,7 +116,7 @@ def kmeans_manual(X):
             ming = Ng + 1
             minValue = 100
             for g in range(0, Ng):
-                aux = abs(Ug[g] - X[i])
+                aux = LA.norm(Ug[g] - X[i])
                 if (minValue > aux):
                     minValue = aux
                     ming = g
@@ -147,19 +154,7 @@ def kmeans_manual(X):
             egtemp.append(Yi[i] * (X[i] - ug[g] * (X[i] - ug[g])))
         eg.append((1 / Ng) * sum(egtemp))
 
-    return (Ug, mg, eg)
-
-
-
-
-
-
-
-
-
-
-
-
+    return mg, Ug, eg
 
 
 def exec():
@@ -168,24 +163,24 @@ def exec():
     c1 = data[50:100]
     c2 = data[100:150]
 
-    c0at0 = c0[:, [0]]
-    c0at1 = c0[:, [1]]
-    c0at2 = c0[:, [2]]
-    c0at3 = c0[:, [3]]
+    c0at0 = np.array(c0[:, [0]]).flatten()
+    c0at1 = np.array(c0[:, [1]]).flatten()
+    c0at2 = np.array(c0[:, [2]]).flatten()
+    c0at3 = np.array(c0[:, [3]]).flatten()
 
     c0_arr = [c0at0, c0at1, c0at2 ,c0at3]
 
-    c1at0 = c1[:, [0]]
-    c1at1 = c1[:, [1]]
-    c1at2 = c1[:, [2]]
-    c1at3 = c1[:, [3]]
+    c1at0 = np.array(c1[:, [0]]).flatten()
+    c1at1 = np.array(c1[:, [1]]).flatten()
+    c1at2 = np.array(c1[:, [2]]).flatten()
+    c1at3 = np.array(c1[:, [3]]).flatten()
 
     c1_arr = [c1at0, c1at1, c1at2, c1at3]
 
-    c2at0 = c2[:, [0]]
-    c2at1 = c2[:, [1]]
-    c2at2 = c2[:, [2]]
-    c2at3 = c2[:, [3]]
+    c2at0 = np.array(c2[:, [0]]).flatten()
+    c2at1 = np.array(c2[:, [1]]).flatten()
+    c2at2 = np.array(c2[:, [2]]).flatten()
+    c2at3 = np.array(c2[:, [3]]).flatten()
 
     c2_arr = [c2at0, c2at1, c2at2, c2at3]
 

@@ -8,9 +8,7 @@ import numpy as np
 import functools
 import math
 from sklearn.datasets import load_iris
-from sklearn.model_selection import train_test_split
 import random
-import decimal
 from numpy import linalg as LA
 
 
@@ -25,8 +23,6 @@ def gauss(x, u, e):
     p1 = 1 / (2 * math.pi)**(D/2) * (np.sqrt(det))
 
     sub = x - u
-    m = 10 ^ -6
-    e_aux = e + np.eye(e.shape[1])*m
     invE = np.linalg.inv(e)
     sub = sub.reshape(4, 1)
     aux1 = np.dot(sub.T, invE)
@@ -62,7 +58,18 @@ def log_sum_p(X, lam):
 
 def GMM(X):
     l = kmeans_manual(X)
-    return max_EMM(X, l)
+    return malicious(X, l)  # Using max_EMM
+
+def malicious(X, lamb):
+    max_interation = 10
+
+    for i in range(0, max_interation):
+        p_old = get_prob(X, lamb)
+        lamb_new = kmeans_manual(X)
+        p_new = get_prob(X, lamb_new)
+        if p_new > p_old:
+            lamb = lamb_new
+    return lamb
 
 
 def get_prob(X, lamb):
@@ -91,11 +98,17 @@ def EMM(X, lam):
 
     Lgi = []
     for g in range(0, Ng):
-
         lgg = []
         for i in range(0, len(X)):
             aux1 = weighted_gauss(X[i], m_arr[g], u_arr[g], e_arr[g])
-            aux2 = sum_weighted_gauss(X[i], lam)
+            det_aux = []
+            for gix in range(0, Ng):
+                m_arr_aux = lam[0]
+                u_arr_aux = lam[1]
+                e_arr_aux = lam[2]
+                aux = weighted_gauss(X[i], m_arr_aux[gix], u_arr_aux[gix], e_arr_aux[gix])
+                det_aux.append(aux)
+            aux2 = sum(det_aux)
             lgg.append(aux1 / aux2)
         Lgi.append(lgg)
 
@@ -118,7 +131,7 @@ def EMM(X, lam):
         for i in range(0, len(X)):
             ug_arr.append(X[i] * Lgi[g][i])
 
-        ug = (1/Lg[g] * np.sum(ug_arr))
+        ug = (1/Lg[g] * sum(ug_arr))
         Ug.append(ug)
 
     SigG = []
@@ -132,17 +145,29 @@ def EMM(X, lam):
         sigG = np.asmatrix(sigG)
         SigG.append(sigG)
 
+    # SigG = []
+    # for g in range(0, Ng):
+    #     sigG_arr = []
+    #     for i in range(0, len(X)):
+    #         outer_x = np.outer(X[i], X[i])
+    #         sigG_arr.append(outer_x * Lgi[g][i])
+    #     acc = sum(sigG_arr)
+    #     outer_u = np.outer(Ug, Ug)
+    #     sub = np.subtract(acc, outer_u)
+    #     res = (1 / Lg[g]) * sub
+    #     sigG = np.asmatrix(res)
+    #     SigG.append(sigG)
+
     return Mg, Ug, SigG
 
 
 def kmeans_manual(X):
     Nv = len(X)
-    Ug = []
     ng = []
     Yi = []
-    for g in range(0, Ng):
-        ix = random.randint(0, Nv - 1)
-        Ug.append(X[ix])
+
+    Ug = [random.choice(X) for i in range(0, Ng)]
+
     loop = 1
     endloop = 10
     finished = False
@@ -170,15 +195,11 @@ def kmeans_manual(X):
             ng.append(sum(gf))
             ug.append(1 / Ng * sum(ugarr))
 
-        same = True
-        for g in range(0, Ng):
-            if np.array_equal(Ug[g], ug[g]):
-                same = False
+        same = all([np.array_equal(Ug[g], ug[g]) for g in range(0, Ng)])
 
         loop = loop + 1
 
-        if same or loop > endloop:
-            finished = True
+        finished = same or loop > endloop
 
         for g in range(0, Ng):
             Ug[g] = ug[g]
@@ -250,12 +271,39 @@ def cross_validation(dataset, target, test_size):
 
     return np.array([c0, c1, c2]), np.array([t0, t1, t2]), test_arr, test_tar
 
+def get_mean_model(X, models):
+
+    acc = []
+    for m in models:
+        aux = math.e ** get_prob(X, m)
+        acc.append(aux)
+    return math.log(sum(acc))
+
+
+def get_impostor_model(lam_client):
+    m_arr = lam_client[0]
+    u_arr = lam_client[1]
+    e_arr = lam_client[2]
+
+    alpha = 0.1
+    scale = 1
+
+    m_impostor = []
+    for m in m_arr:
+        r = (alpha * m + (1 - alpha) * m) * scale
+        m_impostor.append(r)
+
+    u_impostor = []
+    for u in u_arr:
+        r = alpha * u + (1 - alpha) * u
+        u_impostor.append(r)
+
+
 def exec():
 
     data, target = load_iris(True)
 
-    X_train, y_train, X_test, y_test = cross_validation(data, target, 0.4)
-
+    X_train, y_train, X_test, y_test = cross_validation(data, target, 0.2)
 
     c0, c1, c2 = X_train
 
@@ -269,7 +317,6 @@ def exec():
 
     models = [modelOrq1, modelOrq2, modelOrq3]
     compare(X_test, y_test, models)
-
 
 
 exec()

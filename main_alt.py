@@ -10,27 +10,35 @@ import math
 from sklearn.datasets import load_iris
 import random
 from numpy import linalg as LA
+from scipy.stats import multivariate_normal
 
 
 
 Ng = 3
 
 
-def gauss(x, u, e):
-    D = len(x)
-    det = abs(np.linalg.det(e))
-    det = round(det, 3)
-    p1 = 1 / (2 * math.pi)**(D/2) * (np.sqrt(det))
+# def gauss(x, u, e):
+#     D = len(x)
+#     det = abs(np.linalg.det(e))
+#     det = round(det, 3)
+#     p1 = 1 / (2 * math.pi)**(D/2) * (np.sqrt(det))
+#
+#     sub = x - u
+#     invE = np.linalg.inv(e)
+#     sub = sub.reshape(4, 1)
+#     aux1 = np.dot(sub.T, invE)
+#     inv_aux = np.dot(aux1, sub)
+#     p2 = (-1/2) * inv_aux.reshape(1,1)
+#     p2 = p2.item(0)
+#     p2 = round(p2, 3)
+#
+#     res1 = p1 * math.e ** p2
+#     res = multivariate_normal(u, e).pdf(x)
+#     return p1 * math.e ** p2
 
-    sub = x - u
-    invE = np.linalg.inv(e)
-    sub = sub.reshape(4, 1)
-    aux1 = np.dot(sub.T, invE)
-    inv_aux = np.dot(aux1, sub)
-    p2 = (-1/2) * inv_aux.reshape(1,1)
-    p2 = p2.item(0)
-    p2 = round(p2, 3)
-    return p1 * math.e ** p2
+def gauss(x, u , e):
+    res = multivariate_normal(u, e).pdf(x)
+    return res
 
 
 def weighted_gauss(x, m, u, e):
@@ -58,7 +66,7 @@ def log_sum_p(X, lam):
 
 def GMM(X):
     l = kmeans_manual(X)
-    return malicious(X, l)  # Using max_EMM
+    return l  # Using max_EMM
 
 def malicious(X, lamb):
     max_interation = 10
@@ -203,16 +211,19 @@ def kmeans_manual(X):
 
         for g in range(0, Ng):
             Ug[g] = ug[g]
-
     mg = []
-    eg = []
     for g in range(0, Ng):
         mg.append(ng[g] / Nv)
+
+    eg = []
+    for g in range(0, Ng):
         egtemp = []
         for i in range(0, Nv):
-            aux = X[i] - Ug[g]
-            outer_prod = np.outer(aux, aux)
+            aux_sub = X[i] - Ug[g]
+            aux_re = aux_sub.reshape(4, 1)
+            outer_prod = np.outer(aux_sub, aux_sub)
             outer_prod = np.asmatrix(outer_prod)
+            aux_outer = aux_re * aux_re.T
             egtemp.append(outer_prod * Yi[i])
         eg.append((1 / Ng) * sum(egtemp))
 

@@ -1,118 +1,114 @@
 import numpy as np
-import functools
-import  math
-from sklearn.cluster import KMeans
+import math
 from sklearn.datasets import load_iris
 import random
-
-#data = [[[2,51,24,25],[12,52,63],[15,346,45],[],63,52], [1,12,51,2,62,23], [12,3,41,7,23,2]]
-data = [[2, 51, 24, 25, 2, 41],
-        [24, 45, 42, 62, 86, 22],
-        [91, 15, 19, 79, 46, 18, 71]]
+from gaussian import Util
+from GMM import GMM
 
 Ng = 3
-Nv = len(data[0])
+
+def compare(X_test, y, models):
+    util = Util(Ng)
+    accepts = []
+    for ix in range(0, len(X_test)):
+        X = X_test[ix]
+        best_p = 0
+        best_i = -1
+        for m in range(0, len(models)):
+            p = util.sum_weighted_gauss(X, models[m])
+            if p > best_p:
+                best_p = p
+                best_i = m
+        res = y[ix]
+        accepts.append(best_i == res)
+
+    print(sum(accepts) / len(X_test))
 
 
-def baysian_rule(likelihood):
-    P = 1 / 3
-    return likelihood * P
+def cross_validation(dataset, target, test_size):
+    c0 = dataset[0:50]
+    c1 = dataset[50:100]
+    c2 = dataset[100:150]
+
+    t0 = target[0:50]
+    t1 = target[50:100]
+    t2 = target[100:150]
+
+    n_interations = round(len(c0) * test_size)
+    test_arr = []
+    test_tar = []
+
+    for i in range(0, n_interations):
+        rand_i = random.randint(0, len(c0) - 1)
+        test_arr.append(c0[rand_i])
+        test_tar.append(t0[rand_i])
+        c0 = np.delete(c0, rand_i, axis=0)
+        t0 = np.delete(t0, rand_i, axis=0)
+
+    for i in range(0, n_interations):
+        rand_i = random.randint(0, len(c1) - 1)
+        test_arr.append(c1[rand_i])
+        test_tar.append(t1[rand_i])
+        c1 = np.delete(c1, rand_i, axis=0)
+        t1 = np.delete(t1, rand_i, axis=0)
+
+    for i in range(0, n_interations):
+        rand_i = random.randint(0, len(c2) - 1)
+        test_arr.append(c2[rand_i])
+        test_tar.append(t2[rand_i])
+        c2 = np.delete(c2, rand_i, axis=0)
+        t2 = np.delete(t2, rand_i, axis=0)
+
+    return np.array([c0, c1, c2]), np.array([t0, t1, t2]), test_arr, test_tar
+
+def get_mean_model(X, models):
+    util = Util(Ng)
+    acc = []
+    for m in models:
+        aux = math.e ** util.get_prob(X, m)
+        acc.append(aux)
+    return math.log(sum(acc))
 
 
-def join_likelihood(data_li):
-    data_prod = [d * 1/3 for d in data_li]
-    return functools.reduce(lambda x, y: x * y, data_prod)
+def get_impostor_model(lam_client):
+    m_arr = lam_client[0]
+    u_arr = lam_client[1]
+    e_arr = lam_client[2]
 
+    alpha = 0.1
+    scale = 1
 
-def gauss(x, u, e):
-    D = 10
-    p1 = 1 / (2 * math.pi)**(D/2) * (math.modf(e) ** 1/2)
-    p2 = (-1/2)*(((x-u) / e) ** 2)
-    return p1 * math.exp(p2)
+    m_impostor = []
+    for m in m_arr:
+        r = (alpha * m + (1 - alpha) * m) * scale
+        m_impostor.append(r)
 
-
-def PdexDadoLambda(x, Lams):
-    for ix in range(0, Ng):
-        yield GMMPartial(x, Lams[ix])
-
-
-def GMMPartial(x, lam):
-    m = lam[0]
-    u = lam[1]
-    e = lam[2]
-    return m * gauss(x, u, e)
-
-# X é a lista dos arrays de cada gaussiana
-def EEM(X):
-    for d in data:
-        yield kmeans(d)
-    # kmeans = KMeans(n_clusters=Ng, random_state=0)
-    # kmeans.fit(X)
-    # y_pred = kmeans.predict([41,21,5, 1, 24,2])
-    # print(y_pred)
-    # means = kmeans.cluster_centers_
-    # print(means)
-
-def kmeans(X):
-    Ug = []
-    ng = []
-    Yi = []
-    for g in range(0, Ng):
-      Ug.append(random.randint(1, Nv))
-    loop = 1
-    endloop = 10
-    finished = False
-    while not finished:
-        Yi.clear()
-        ng.clear()
-        for i in range(0, Nv):
-            ming = []
-            for g in range(0, Ng):
-                ming.append(abs(Ug[g] - X[i]))
-            Yi.append(min(ming))
-        ug = []
-        for g in range(0, Ng):
-            gf = []
-            ugarr = []
-            for i in range(0, Nv):
-                gf.append(Yi[i] == g)
-                ugarr.append(X[i] * (Yi[i] == g))
-            ng.append(functools.reduce(lambda x, y: x + y, gf))
-            ug.append(1/Ng * functools.reduce(lambda x, y: x + y, ugarr))
-
-        same = True
-        for g in range(0, Ng):
-            if Ug[g] != ug[g]:
-                same = False
-
-        loop = loop + 1
-
-        if same or loop > endloop:
-            finished = True
-
-        for g in range(0, Ng):
-            Ug = ug
-
-    mg = []
-    eg = []
-    for g in range(0, Ng):
-        mg.append(ng[g] / Nv)
-        egtemp = []
-        for i in range(0, Nv):
-            egtemp.append(Yi[i] * (X[i] - ug[g] * (X[i] - ug[g])))
-        eg.append( (1/Ng) * functools.reduce(lambda x,y: x + y, egtemp))
-
-
-    return (Ug, mg, eg)
-
-def EEM(X):
-    for d in data:
-        mean = kmeans(d)
-        print(mean)
+    u_impostor = []
+    for u in u_arr:
+        r = alpha * u + (1 - alpha) * u
+        u_impostor.append(r)
 
 
 def exec():
-    EEM(data)
+
+    gmm = GMM(Ng)
+
+    data, target = load_iris(True)
+
+    X_train, y_train, X_test, y_test = cross_validation(data, target, 0.2)
+
+    c0, c1, c2 = X_train
+
+    orq1 = np.array(c0)
+    orq2 = np.array(c1)
+    orq3 = np.array(c2)
+
+    modelOrq1 = gmm.model(orq1)
+    modelOrq2 = gmm.model(orq2)
+    modelOrq3 = gmm.model(orq3)
+
+    models = [modelOrq1, modelOrq2, modelOrq3]
+    compare(X_test, y_test, models)
 
 
 exec()

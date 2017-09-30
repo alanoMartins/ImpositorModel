@@ -76,5 +76,5 @@ class GMM():
         for g in range(0, self.Ng):
             new_res = X - Ug[g]
             SigG.append(np.cov(new_res.T))
-            
+
         return Mg, Ug, SigG

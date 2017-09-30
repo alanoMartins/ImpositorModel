@@ -23,7 +23,7 @@ class GMM():
     def model(self, X):
         kmeans = KMeans(self.Ng)
         lamb = kmeans.exec(X)
-        return self.malicious(X, lamb)
+        return self.max_EMM(X, lamb)
 
     def max_EMM(self, X, lamb):
         max_interation = 10
@@ -74,26 +74,7 @@ class GMM():
 
         SigG = []
         for g in range(0, self.Ng):
-            sigG_arr = []
-            for i in range(0, len(X)):
-                arr = X[i] - Ug[g]
-                outer_x = np.outer(arr, arr)
-                sigG_arr.append(outer_x * Lgi[g][i])
-            sigG = (1 / Lg[g]) * sum(sigG_arr)
-            sigG = np.asmatrix(sigG)
-            SigG.append(sigG)
-
-        # SigG = []
-        # for g in range(0, Ng):
-        #     sigG_arr = []
-        #     for i in range(0, len(X)):
-        #         outer_x = np.outer(X[i], X[i])
-        #         sigG_arr.append(outer_x * Lgi[g][i])
-        #     acc = sum(sigG_arr)
-        #     outer_u = np.outer(Ug, Ug)
-        #     sub = np.subtract(acc, outer_u)
-        #     res = (1 / Lg[g]) * sub
-        #     sigG = np.asmatrix(res)
-        #     SigG.append(sigG)
-
+            new_res = X - Ug[g]
+            SigG.append(np.cov(new_res.T))
+            
         return Mg, Ug, SigG

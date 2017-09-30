@@ -19,12 +19,17 @@ class KMeans():
 
     def new_mu(self, X, delta_kronecker):
         gf = [delta_kronecker(i) for i in range(0, len(X))]
+        if sum(gf) == 0:
+            return 0, [0, 0, 0, 0]
         ugarr = (1 / sum(gf)) * sum([X[ix] * y for ix, y in enumerate(gf)])
         return sum(gf), ugarr
 
     def new_ng(self, X, delta_kronecker):
         gf = [delta_kronecker(i) for i in range(0, len(X))]
         return sum(gf)
+        acc = []
+        for i in range(0, len(X)):
+            acc.append(self.sum_weighted_gauss(X[i], lamb))
 
     def delta_kronecker(self, X, Y):
         return X == Y
@@ -56,11 +61,13 @@ class KMeans():
 
         Sigmas = []
         for g in range(0, self.Ng):
-            sigma_temp = []
-            for i in range(0, len(X)):
-                aux_re = (X[i] - Mu_arr[g]).reshape(4, 1)
-                aux_outer = aux_re * aux_re.T
-                sigma_temp.append(aux_outer * y[i])
-            Sigmas.append((1 / self.Ng) * sum(sigma_temp))
+            new_res = X - Mu_arr[g]
+            Sigmas.append(np.cov(new_res.T))
+            # sigma_temp = []
+            # for i in range(0, len(X)):
+            #     aux_re = (X[i] - Mu_arr[g]).reshape(4, 1)
+            #     aux_outer = aux_re * aux_re.T
+            #     sigma_temp.append(aux_outer * y[i])
+            # Sigmas.append((1 / self.Ng) * sum(sigma_temp))
 
         return mg, Mu_arr, Sigmas

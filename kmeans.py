@@ -1,7 +1,4 @@
 import numpy as np
-import functools
-import math
-from sklearn.datasets import load_iris
 import random
 from numpy import linalg as LA
 
@@ -63,11 +60,5 @@ class KMeans():
         for g in range(0, self.Ng):
             new_res = X - Mu_arr[g]
             Sigmas.append(np.cov(new_res.T))
-            # sigma_temp = []
-            # for i in range(0, len(X)):
-            #     aux_re = (X[i] - Mu_arr[g]).reshape(4, 1)
-            #     aux_outer = aux_re * aux_re.T
-            #     sigma_temp.append(aux_outer * y[i])
-            # Sigmas.append((1 / self.Ng) * sum(sigma_temp))
 
         return mg, Mu_arr, Sigmas

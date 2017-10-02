@@ -1,11 +1,13 @@
 import numpy as np
 import math
+import datetime
 from sklearn.datasets import load_iris
 import random
 from gaussian import Util
 from GMM import GMM
 
 Ng = 3
+
 
 def compare(X_test, y, models):
     util = Util(Ng)
@@ -90,6 +92,7 @@ def get_impostor_model(lam_client):
 
 
 def exec():
+    startTime = datetime.datetime.now()
 
     gmm = GMM(Ng)
 
@@ -109,6 +112,12 @@ def exec():
 
     models = [modelOrq1, modelOrq2, modelOrq3]
     compare(X_test, y_test, models)
+
+    finishTime = datetime.datetime.now()
+
+    duration = finishTime - startTime
+    print('Duration')
+    print(duration)
 
 
 exec()

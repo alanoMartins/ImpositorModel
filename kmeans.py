@@ -2,63 +2,51 @@ import numpy as np
 import random
 from numpy import linalg as LA
 
-class KMeans():
 
-    def __init__(self, number_of_gaussians):
+class KMeans:
+
+    def __init__(self, number_of_gaussians, max_interation=10):
         self.Ng = number_of_gaussians
+        self.max_interation = max_interation
 
-    def min_norm_gauss(self, Ug, Xi):
-        norms = [LA.norm(Ug[g] - Xi) for g in range(0, self.Ng)]
+    def __min_norm_gauss(self, mu, Xi):
+        norms = [LA.norm(mu[g] - Xi) for g in range(0, self.Ng)]
         return norms.index(min(norms))
 
-    def min_index_gauss(self, Ug, X):
-        return [self.min_norm_gauss(Ug, X[i]) for i in range(0, len(X))]
+    def __min_index_gauss(self, mu, data):
+        return [self.__min_norm_gauss(mu, data[i]) for i in range(0, len(data))]
 
-    def new_mu(self, X, delta_kronecker):
-        gf = [delta_kronecker(i) for i in range(0, len(X))]
-        if sum(gf) == 0:
-            return 0, [0, 0, 0, 0]
-        ugarr = (1 / sum(gf)) * sum([X[ix] * y for ix, y in enumerate(gf)])
-        return sum(gf), ugarr
+    def __means(self, X):
+        def __new_mu(data, delta_kronecker):
+            gf = [delta_kronecker(i) for i in range(0, len(data))]
+            if sum(gf) == 0:
+                return 0, np.zeros(len(data[0]))
+            mu_updated = (1 / sum(gf)) * sum([data[ix] * y for ix, y in enumerate(gf)])
+            return sum(gf), mu_updated
 
-    def new_ng(self, X, delta_kronecker):
-        gf = [delta_kronecker(i) for i in range(0, len(X))]
-        return sum(gf)
-        acc = []
-        for i in range(0, len(X)):
-            acc.append(self.sum_weighted_gauss(X[i], lamb))
-
-    def delta_kronecker(self, X, Y):
-        return X == Y
-
-    def means(self, X):
-        Ug = [random.choice(X) for i in range(0, self.Ng)]
+        mu = [random.choice(X) for i in range(0, self.Ng)]
 
         loop = 1
-        endloop = 10
         finished = False
+        yi = []
+        ng = []
         while not finished:
-            Yi = self.min_index_gauss(Ug, X)
-            res = [self.new_mu(X, lambda ix: Yi[ix] == g) for g in range(0, self.Ng)]
-            ng, ug = zip(*res)
+            yi = self.__min_index_gauss(mu, X)
+            res = [__new_mu(X, lambda ix: yi[ix] == g) for g in range(0, self.Ng)]
+            ng, mu_new = zip(*res)
             ng = list(ng)
-            ug = list(ug)
+            mu_new = list(mu_new)
 
-            same = all([np.array_equal(Ug[g], ug[g]) for g in range(0, self.Ng)])
+            same = all([np.array_equal(mu[g], mu_new[g]) for g in range(0, self.Ng)])
             loop = loop + 1
-            finished = same or loop > endloop
+            finished = same or loop > self.max_interation
 
-            Ug = ug
-        return ng, Ug, Yi
+            mu = mu_new
+        return ng, mu, yi
 
-    def exec(self, X):
-        ng, Mu_arr, y = self.means(X)
+    def exec(self, data):
+        ng, mu, y = self.__means(data)
+        mg = [ng[g] / len(data) for g in range(0, self.Ng)]
+        sigmas = [np.cov((data - mu[g]).T) for g in range(0, self.Ng)]
 
-        mg = [ng[g] / len(X) for g in range(0, self.Ng)]
-
-        Sigmas = []
-        for g in range(0, self.Ng):
-            new_res = X - Mu_arr[g]
-            Sigmas.append(np.cov(new_res.T))
-
-        return mg, Mu_arr, Sigmas
+        return mg, mu, sigmas

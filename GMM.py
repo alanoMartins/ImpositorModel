@@ -2,79 +2,48 @@ import numpy as np
 from gaussian import Util
 from kmeans import KMeans
 
-class GMM():
 
-    def __init__(self, number_of_gaussian):
+class GMM:
+
+    def __init__(self, number_of_gaussian, max_interation=10):
         self.Ng = number_of_gaussian
+        self.max_interation = max_interation
         self.utils = Util(number_of_gaussian)
-
-    def malicious(self, X, lamb):
-        kmeans = KMeans(self.Ng)
-        max_interation = 10
-
-        for i in range(0, max_interation):
-            p_old = self.utils.get_prob(X, lamb)
-            lamb_new = kmeans.exec(X)
-            p_new = self.utils.get_prob(X, lamb_new)
-            if p_new > p_old:
-                lamb = lamb_new
-        return lamb
 
     def model(self, X):
         kmeans = KMeans(self.Ng)
         lamb = kmeans.exec(X)
-        return self.max_EMM(X, lamb)
+        return self.__maximum_likelihood(X, lamb)
 
-    def max_EMM(self, X, lamb):
-        max_interation = 10
-
-        for i in range(0, max_interation):
+    def __maximum_likelihood(self, X, lamb):
+        for i in range(0, self.max_interation):
             p_old = self.utils.get_prob(X, lamb)
-            lamb_new = self.EM(X, lamb)
+            lamb_new = self.__expectation_maximisation(X, lamb)
             p_new = self.utils.get_prob(X, lamb_new)
             if p_new > p_old:
                 lamb = lamb_new
         return lamb
 
-    def EM(self, X, lam):
-        m_arr = lam[0]
-        u_arr = lam[1]
-        e_arr = lam[2]
+    def __expectation_maximisation(self, X, lam):
 
-        Lgi = []
-        for g in range(0, self.Ng):
-            lgg = []
+        def calc_lg(data, lamb, g):
             for i in range(0, len(X)):
-                aux1 = self.utils.weighted_gauss(X[i], m_arr[g], u_arr[g], e_arr[g])
-                det_aux = []
-                for gix in range(0, self.Ng):
-                    m_arr_aux = lam[0]
-                    u_arr_aux = lam[1]
-                    e_arr_aux = lam[2]
-                    aux = self.utils.weighted_gauss(X[i], m_arr_aux[gix], u_arr_aux[gix], e_arr_aux[gix])
-                    det_aux.append(aux)
-                aux2 = sum(det_aux)
-                lgg.append(aux1 / aux2)
-            Lgi.append(lgg)
+                aux1 = self.utils.weighted_gauss(data[i], lamb[0][g], lamb[1][g], lamb[2][g])
+                aux2 = self.utils.sum_weighted_gauss(data[i], lamb)
+                yield aux1 / aux2
 
-        Lg = []
-        lg = []
-        for g in range(0, self.Ng):
-            for i in range(0, len(X)):
-                lg.append(Lgi[g][i])
-            Lg.append(sum(lg))
+        def ug_concat(x, lg_aux): return [x[i] * lg_aux[i] for i in range(0, len(x))]
 
-        Mg = [Lg[g] / len(X) for g in range(0, self.Ng)]
+        def safe_div(x, y):
+            if y == 0:
+                return 0
+            return x / y
 
-        Ug = []
-        for g in range(0, self.Ng):
-            ug_arr = [X[i] * Lgi[g][i] for i in range(0, len(X))]
-            ug = (1 / Lg[g] * sum(ug_arr))
-            Ug.append(ug)
+        lgi = [list(calc_lg(X, lam, g)) for g in range(0, self.Ng)]
+        lg = [sum(lgi[g]) for g in range(0, self.Ng)]
 
-        SigG = []
-        for g in range(0, self.Ng):
-            new_res = X - Ug[g]
-            SigG.append(np.cov(new_res.T))
+        weight = [lg[g] / len(X) for g in range(0, self.Ng)]
+        mu = [(safe_div(1, lg[g]) * sum(ug_concat(X, lgi[g]))) for g in range(0, self.Ng)]
+        sigma = [np.cov((X - mu[g]).T) for g in range(0, self.Ng)]
 
-        return Mg, Ug, SigG
+        return weight, mu, sigma

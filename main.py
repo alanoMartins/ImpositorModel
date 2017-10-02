@@ -5,26 +5,35 @@ from sklearn.datasets import load_iris
 import random
 from gaussian import Util
 from GMM import GMM
+import matplotlib.pyplot as plt
+
 
 Ng = 3
 
 
-def compare(X_test, y, models):
+def compare(data_test, target_test, models):
     util = Util(Ng)
     accepts = []
-    for ix in range(0, len(X_test)):
-        X = X_test[ix]
+    for ix in range(0, len(data_test)):
+        data = data_test[ix]
+        target = target_test[ix]
         best_p = 0
-        best_i = -1
-        for m in range(0, len(models)):
-            p = util.sum_weighted_gauss(X, models[m])
+        best_class = -1
+        for c in range(0, len(models)):
+            p = util.sum_weighted_gauss(data, models[c])
             if p > best_p:
                 best_p = p
-                best_i = m
-        res = y[ix]
-        accepts.append(best_i == res)
+                best_class = c
 
-    print(sum(accepts) / len(X_test))
+        accepts.append(best_class == target)
+
+    taxa_accepts = sum(accepts) / len(data_test)
+    taxa_errors = (len(data_test) - sum(accepts)) / len(data_test)
+
+    print("Taxa de acertos: %f" % taxa_accepts)
+    print("Taxa de errors: %f" % taxa_errors)
+
+    return taxa_accepts, taxa_errors
 
 
 def cross_validation(dataset, target, test_size):
@@ -90,13 +99,44 @@ def get_impostor_model(lam_client):
         r = alpha * u + (1 - alpha) * u
         u_impostor.append(r)
 
+def plot():
+    startTime = datetime.datetime.now()
+
+    executions = 2
+    xAxis = np.arange(executions)
+
+    execs = [exec() for e in range(0, executions)]
+
+    accepts, errors = zip(*execs)
+
+    finishTime = datetime.datetime.now()
+
+    duration = finishTime - startTime
+    print('Duration Total')
+    print(duration)
+
+
+    fig, ax = plt.subplots()
+
+    rects1 = ax.bar(xAxis, accepts, color='b')
+    rects2 = ax.bar(xAxis, errors, color='r')
+
+    ax.set_ylabel('Taxa de acerto')
+    ax.set_title('GMM')
+
+    ax.legend((rects1[0], rects2[0]), ('Acerto', 'Erro'))
+
+    plt.show()
+
 
 def exec():
     startTime = datetime.datetime.now()
 
-    gmm = GMM(Ng)
-
     data, target = load_iris(True)
+
+    # from cross_validation import CrossValidation
+    # cross_validator = CrossValidation(0.2)
+    # X_train, y_train, X_test, y_test = cross_validator.exec(data, target)
 
     X_train, y_train, X_test, y_test = cross_validation(data, target, 0.2)
 
@@ -106,18 +146,37 @@ def exec():
     orq2 = np.array(c1)
     orq3 = np.array(c2)
 
+    startTime_models = datetime.datetime.now()
+
+    gmm = GMM(Ng)
+
     modelOrq1 = gmm.model(orq1)
     modelOrq2 = gmm.model(orq2)
     modelOrq3 = gmm.model(orq3)
 
     models = [modelOrq1, modelOrq2, modelOrq3]
-    compare(X_test, y_test, models)
+
+    finishTime_models = datetime.datetime.now()
+
+    duration_models = finishTime_models - startTime_models
+    print('Duration Creation models')
+    print(duration_models)
+
+    startTime_compare = datetime.datetime.now()
+    result = compare(X_test, y_test, models)
+    finishTime_models = datetime.datetime.now()
+
+    duration_compare = finishTime_models - startTime_compare
+    print('Duration Compare')
+    print(duration_compare)
 
     finishTime = datetime.datetime.now()
 
     duration = finishTime - startTime
-    print('Duration')
+    print('Duration parcial: ')
     print(duration)
+    print('\n \n')
 
+    return result
 
-exec()
+plot()

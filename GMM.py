@@ -17,9 +17,9 @@ class GMM:
 
     def __maximum_likelihood(self, X, lamb):
         for i in range(0, self.max_interation):
-            p_old = self.utils.get_prob(X, lamb)
+            p_old = self.utils.get_prob_log(X, lamb)
             lamb_new = self.__expectation_maximisation(X, lamb)
-            p_new = self.utils.get_prob(X, lamb_new)
+            p_new = self.utils.get_prob_log(X, lamb_new)
             if p_new > p_old:
                 lamb = lamb_new
         return lamb

@@ -81,23 +81,28 @@ def get_mean_model(X, models):
     return math.log(sum(acc))
 
 
-def get_impostor_model(lam_client):
-    m_arr = lam_client[0]
-    u_arr = lam_client[1]
-    e_arr = lam_client[2]
+def get_impostor_model(lam_client, lam_universal):
+    weight_client = lam_client[0]
+    mu_client = lam_client[1]
+    sigma_client = lam_client[2]
+
+    weight_universal = lam_universal[0]
+    mu_universal = lam_universal[1]
+    sigma_universal = lam_universal[2]
 
     alpha = 0.1
-    scale = 1
+    scale = 8
 
-    m_impostor = []
-    for m in m_arr:
-        r = (alpha * m + (1 - alpha) * m) * scale
-        m_impostor.append(r)
+    weight_updater = lambda w_cli, w_uni: ((alpha*w_cli) + (1-alpha)*w_uni ) * scale
+    mu_updater = lambda mu_cli, mu_uni: ((alpha*mu_cli) + ((1-alpha) * mu_universal))
+    sigma_updater = lambda sig_cli, sig_uni, mu_cli, mu_uni, new_mu: \
+        (alpha * (sig_cli + np.outer(mu_cli, mu_cli)) + (1-alpha) * (sig_uni + np.outer(mu_uni, mu_uni))) - np.outer(new_mu, new_mu)
 
-    u_impostor = []
-    for u in u_arr:
-        r = alpha * u + (1 - alpha) * u
-        u_impostor.append(r)
+    weight_new = [weight_updater(weight_client[g], weight_universal[g]) for g in range(0, Ng)]
+    mu_new = [mu_updater(mu_client[g], mu_universal[g]) for g in range(0, Ng)]
+    sigma_new = [sigma_updater(sigma_client[g], sigma_universal[g], mu_client[g], mu_universal[g], mu_updater[g]) for g in range(0, Ng)]
+
+    return weight_new, mu_new, sigma_new
 
 def plot():
     startTime = datetime.datetime.now()
@@ -145,10 +150,17 @@ def exec():
     orq1 = np.array(c0)
     orq2 = np.array(c1)
     orq3 = np.array(c2)
+    impostor = np.concatenate([c0, c1, c2])
 
     startTime_models = datetime.datetime.now()
 
     gmm = GMM(Ng)
+
+    modelUniversal = gmm.model(impostor)
+    # modelOrq1 = gmm.model_with_impostor(orq1, modelUniversal)
+    # modelOrq2 = gmm.model_with_impostor(orq2, modelUniversal)
+    # modelOrq3 = gmm.model_with_impostor(orq3, modelUniversal)
+
 
     modelOrq1 = gmm.model(orq1)
     modelOrq2 = gmm.model(orq2)

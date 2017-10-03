@@ -108,7 +108,7 @@ def get_impostor_model(lam_client, lam_universal):
 def plot():
     startTime = datetime.datetime.now()
 
-    executions = 2
+    executions = 1
     xAxis = np.arange(executions)
 
     execs = [exec() for e in range(0, executions)]
@@ -164,7 +164,7 @@ def exec():
 
     gmm = GMM(Ng)
 
-    modelUniversal = gmm.model(impostor)
+    #modelUniversal = gmm.model(impostor)
     # modelOrq1 = gmm.model_with_impostor(orq1, modelUniversal)
     # modelOrq2 = gmm.model_with_impostor(orq2, modelUniversal)
     # modelOrq3 = gmm.model_with_impostor(orq3, modelUniversal)

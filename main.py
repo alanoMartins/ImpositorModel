@@ -3,6 +3,7 @@ import math
 import datetime
 from sklearn.datasets import load_iris
 import random
+import pandas as pd
 from gaussian import Util
 from GMM import GMM
 import matplotlib.pyplot as plt
@@ -138,6 +139,13 @@ def exec():
     startTime = datetime.datetime.now()
 
     data, target = load_iris(True)
+    iris = load_iris()
+
+    frame = pd.DataFrame(data=np.c_[iris['data'], iris['target']],
+                         columns=iris['feature_names'] + ['target'])
+
+    groups = frame.groupby(['target'])
+    d1 = frame.iloc[:, 0]
 
     # from cross_validation import CrossValidation
     # cross_validator = CrossValidation(0.2)

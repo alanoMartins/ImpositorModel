@@ -10,15 +10,15 @@ class GMM:
         self.max_interation = max_interation
         self.utils = Util(number_of_gaussian)
 
-    def model(self, X):
+    def model(self, data):
         kmeans = KMeans(self.Ng)
-        lamb = kmeans.exec(X)
-        return self.__maximum_likelihood(X, lamb)
+        lamb = kmeans.exec(data)
+        return self.__maximum_likelihood(data, lamb)
 
-    def model_with_impostor(self, X, universal_lamb):
+    def model_with_impostor(self, data, universal_lamb):
         kmeans = KMeans(self.Ng)
-        lamb = kmeans.exec(X)
-        return self.__maximum_a_posteriori(X, lamb, universal_lamb)
+        lamb = kmeans.exec(data)
+        return self.__maximum_a_posteriori(data, lamb, universal_lamb)
 
     def a_posteriori(self, data, lam_client, lam_universal):
         weight_client = lam_client[0]
@@ -71,8 +71,6 @@ class GMM:
             yield aux1 / aux2
 
     def __expectation_maximisation(self, X, lam):
-
-
 
         def ug_concat(x, lg_aux): return [x[i] * lg_aux[i] for i in range(0, len(x))]
 

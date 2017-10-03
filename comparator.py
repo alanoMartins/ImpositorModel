@@ -1,7 +1,7 @@
 from gaussian import Util
 
 
-class Comparator:
+class ComparatorWithImpostor:
 
     def __init__(self, number_gaussian):
         self.ng = number_gaussian
@@ -53,3 +53,43 @@ class Comparator:
         prob_impostor = util.sum_weighted_gauss(data, impostor)
 
         return prob_client > prob_impostor
+
+
+class Comparator:
+
+    def __init__(self, number_gaussian):
+        self.ng = number_gaussian
+
+    def sumary(self, data_test, target_test, models):
+        accepts = self.compare(data_test, target_test, models)
+
+        taxa_accepts = sum(accepts) / len(data_test)
+        taxa_errors = (len(data_test) - sum(accepts)) / len(data_test)
+
+        print("Taxa de acertos: %f" % taxa_accepts)
+        print("Taxa de errors: %f" % taxa_errors)
+
+        return taxa_accepts, taxa_errors
+
+    def compare(self, data_test, target_test, models):
+        accepts = []
+        for ix in range(0, len(data_test)):
+            data = data_test[ix]
+            target = target_test[ix]
+            best_class = self.find_best_class(data, models)
+
+            accepts.append(best_class == target)
+
+        return accepts
+
+    def find_best_class(self, data, models):
+        util = Util(self.ng)
+        best_p = 0
+        best_class = -1
+        for c in range(0, len(models)):
+            client = models[c]
+            p = util.sum_weighted_gauss(data, client)
+            if p > best_p:
+                best_p = p
+                best_class = c
+        return best_class

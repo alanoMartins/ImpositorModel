@@ -7,16 +7,27 @@ class CrossValidation:
     def __init__(self, test_size):
         self.test_size = test_size
 
-    def group_by_data(self, data):
-        d0 = data[0:50]
-        d1 = data[50:100]
-        d2 = data[100:150]
+    def group_by_data(self, data, tar):
 
-        return np.array([d0, d1, d2])
+        def get_key(t):
+            return t[1]
+
+        res = list(zip(data, tar))
+        res = sorted(res, key=get_key)
+        data, tar = list(zip(*res))
+        d0 = data[0:10]
+        d1 = data[10:20]
+        d2 = data[20:30]
+
+        t0 = tar[0:10]
+        t1 = tar[10:20]
+        t2 = tar[20:30]
+
+        return np.array([d0, d1, d2]), np.array([t0, t1, t2])
 
     def exec(self, data, tar):
-        dataset = self.group_by_data(data)
-        target = self.group_by_data(tar)
+        dataset, target = self.group_by_data(data, tar)
+
         n_interaction = [round(len(d) * self.test_size) for d in dataset]
 
         data_tes = []

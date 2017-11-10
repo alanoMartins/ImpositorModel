@@ -1,4 +1,5 @@
 from scipy.stats import multivariate_normal
+import numpy as np
 import math
 
 
@@ -9,8 +10,13 @@ class Util:
 
     @staticmethod
     def gauss(x, u, e):
-        res = multivariate_normal(u, e).pdf(x)
-        return res
+        det = np.linalg.det(e)
+        det = round(det, 2)
+        r = np.linalg.cond(e)
+        print('Determinante %d' % det)
+        print('Condition %d' % r)
+        res = multivariate_normal(u, e)
+        return res.pdf(x)
 
     def weighted_gauss(self, x, m, u, e):
         return m * self.gauss(x, u, e)

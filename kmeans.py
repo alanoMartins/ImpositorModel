@@ -49,4 +49,8 @@ class KMeans:
         mg = [ng[g] / len(data) for g in range(0, self.Ng)]
         sigmas = [np.cov((data - mu[g]).T) for g in range(0, self.Ng)]
 
+        print('Cov 1 %d '% np.linalg.det(sigmas[0]))
+        print('Cov 2 %d ' % np.linalg.det(sigmas[1]))
+        print('Cov 3 %d ' % np.linalg.det(sigmas[2]))
+
         return mg, mu, sigmas

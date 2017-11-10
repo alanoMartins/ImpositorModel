@@ -1,11 +1,11 @@
 import numpy as np
 import datetime
-from sklearn.datasets import load_iris
 import pandas as pd
 from GMM import GMM
 import matplotlib.pyplot as plt
 from comparator import ComparatorWithImpostor, Comparator
 from cross_validation import CrossValidation
+
 
 
 Ng = 3
@@ -20,14 +20,17 @@ class Tester:
         self.cross_validator = CrossValidation(0.2)
 
     def initializer(self):
-        data, target = load_iris(True)
-        self.data_frame = []
-        for d in data:
-            df_t = pd.DataFrame(d)
-            self.data_frame.append(df_t)
+        target_frame_sanderson = pd.read_csv('data/feature.csv')
+        target_frame_sanderson.fillna(0, inplace=True)
+        y = target_frame_sanderson.iloc[:, 1].values
+        X = self.preprocess(target_frame_sanderson)
+        #X = np.multiply(X, 1000)
+        #X = list(filter(lambda x: x > 1, X))
+        self.X_train, self.y_train, self.X_test, self.y_test = self.cross_validator.exec(X, y)
 
-        self.target_frame = pd.DataFrame(target)
-        self.X_train, self.y_train, self.X_test, self.y_test = self.cross_validator.exec(data, target)
+    def preprocess(self, df):
+        #df.drop([col for col, val in df.sum().iteritems() if val < 20], axis=1, inplace=True)
+        return df.iloc[:, 2:500].values
 
     def plot(self, executions, index_models=0):
         startTime = datetime.datetime.now()
@@ -129,11 +132,11 @@ if __name__ == '__main__':
     t.initializer()
     print('------------------ Modelo sem impostors -----------------------')
     print('\n')
-    t.plot(10, 0)
-    print('------------------ Modelo modelo BPS -----------------------')
-    print('\n')
-    t.plot(3, 1)
-    print('------------------ Modelo universal -----------------------')
-    print('\n')
-    t.plot(3, 2)
+    t.plot(1, 0)
+    # print('------------------ Modelo modelo BPS -----------------------')
+    # print('\n')
+    # t.plot(3, 1)
+    # print('------------------ Modelo universal -----------------------')
+    # print('\n')
+    # t.plot(3, 2)
 

@@ -8,13 +8,11 @@ class Util:
     def __init__(self, number_of_gaussians):
         self.Ng = number_of_gaussians
 
-    @staticmethod
-    def gauss(x, u, e):
-        det = np.linalg.det(e)
-        det = round(det, 2)
-        r = np.linalg.cond(e)
-        print('Determinante %d' % det)
-        print('Condition %d' % r)
+
+    def gauss(self, x, u, e):
+        e += 0.3 * np.identity(len(e))
+        print('Deter %d ' % np.linalg.det(e))
+        self.plotIt(x, u, e)
         res = multivariate_normal(u, e)
         return res.pdf(x)
 

@@ -1,6 +1,7 @@
 import numpy as np
 import random
 from numpy import linalg as LA
+import matplotlib.pyplot as plt
 
 
 class KMeans:
@@ -47,10 +48,7 @@ class KMeans:
     def exec(self, data):
         ng, mu, y = self.__means(data)
         mg = [ng[g] / len(data) for g in range(0, self.Ng)]
-        sigmas = [np.cov((data - mu[g]).T) for g in range(0, self.Ng)]
-
-        print('Cov 1 %d '% np.linalg.det(sigmas[0]))
-        print('Cov 2 %d ' % np.linalg.det(sigmas[1]))
-        print('Cov 3 %d ' % np.linalg.det(sigmas[2]))
+        sigmas = [np.cov((data).T) for g in range(0, self.Ng)]
+        sigmas = np.array(sigmas)
 
         return mg, mu, sigmas

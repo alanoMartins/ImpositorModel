@@ -13,6 +13,7 @@ class GMM:
     def model(self, data):
         kmeans = KMeans(self.Ng)
         lamb = kmeans.exec(data)
+        #return lamb
         return self.__maximum_likelihood(data, lamb)
 
     def __maximum_likelihood(self, X, lamb):
@@ -44,6 +45,16 @@ class GMM:
 
         weight = [lg[g] / len(X) for g in range(0, self.Ng)]
         mu = [(safe_div(1, lg[g]) * sum(ug_concat(X, lgi[g]))) for g in range(0, self.Ng)]
-        sigma = [np.cov((X - mu[g]).T) for g in range(0, self.Ng)]
+        sigmas = []
+        for g in range(0, self.Ng):
+            acc = []
+            for i in range(0, len(X)):
+                s = np.outer(X[i] - mu[g], X[i] - mu[g]) * lgi[g][i]
+                acc.append(s)
+            r = safe_div(1, lg[g]) * sum(acc)
+            sigmas.append(r)
 
-        return weight, mu, sigma
+
+        #sigma = [np.cov((X - mu[g]).T) for g in range(0, self.Ng)]
+
+        return weight, mu, sigmas

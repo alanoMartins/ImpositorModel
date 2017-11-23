@@ -46,9 +46,25 @@ class KMeans:
         return ng, mu, yi
 
     def exec(self, data):
+        def safe_div(x, y):
+            if y == 0:
+                return 0
+            return x / y
+
         ng, mu, y = self.__means(data)
         mg = [ng[g] / len(data) for g in range(0, self.Ng)]
-        sigmas = [np.cov((data).T) for g in range(0, self.Ng)]
+
+        sigmas = []
+        for g in range(0, self.Ng):
+            acc = []
+            for i in range(0, len(data)):
+                s = np.outer(data[i] - mu[g], data[i] - mu[g]) * (y[i] == g)
+                acc.append(s)
+            r = safe_div(1, ng[g]) * sum(acc)
+            sigmas.append(r)
+
+        sigmas1 = [safe_div(1, ng[g]) * np.cov((data - mu[g]).T) * np.identity(len(data[0])) for g in range(0, self.Ng)]
         sigmas = np.array(sigmas)
+
 
         return mg, mu, sigmas

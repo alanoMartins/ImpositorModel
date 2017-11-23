@@ -5,6 +5,9 @@ from GMM import GMM
 import matplotlib.pyplot as plt
 from comparator import ComparatorWithImpostor, Comparator
 from cross_validation import CrossValidation
+from sklearn.mixture import GaussianMixture
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
 
 
 
@@ -17,18 +20,14 @@ class Tester:
         self.gmm = GMM(number_of_gaussian)
         self.comparator_with_impostor = ComparatorWithImpostor(number_of_gaussian)
         self.comparator = Comparator(number_of_gaussian)
-        self.cross_validator = CrossValidation(0.2)
+        self.cross_validator = CrossValidation(0.3)
 
     def initializer(self):
-        target_frame_sanderson = pd.read_csv('data/feature_lib.csv')
+        target_frame_sanderson = pd.read_csv('data/feature.csv')
         target_frame_sanderson.fillna(0, inplace=True)
         y = target_frame_sanderson.iloc[:, 1].values
-        X = target_frame_sanderson.iloc[:, 2:150].values
+        X = target_frame_sanderson.iloc[:, 2:].values
         self.X_train, self.y_train, self.X_test, self.y_test = self.cross_validator.exec(X, y)
-
-    def preprocess(self, df):
-        values = df.iloc[:, 2:200].values
-        return values
 
     def plotOne(self, data):
         l = len(data)
@@ -93,27 +92,19 @@ class Tester:
                 (self.gmm.model(orq3), self.gmm.model(impostorOrq3))]
 
     def models_with_universal(self, X_train):
-        c0, c1, c2 = X_train
+        cs = [np.array(ci) for ci in X_train]
+        concated = np.concatenate(cs)
+        universal = self.gmm.model(concated)
+        models = [self.gmm.model(ci) for ci in cs]
 
-        orq1 = np.array(c0)
-        orq2 = np.array(c1)
-        orq3 = np.array(c2)
+        result = [(model, universal) for model in models]
 
-        impostorUniversal = np.concatenate([c0, c1, c2])
-        universal = self.gmm.model(impostorUniversal)
-
-        return [(self.gmm.model(orq1), universal),
-                (self.gmm.model(orq2), universal),
-                (self.gmm.model(orq3), universal)]
+        return result
 
     def models(self, X_train):
-        c0, c1, c2 = X_train
-
-        orq1 = np.array(c0)
-        orq2 = np.array(c1)
-        orq3 = np.array(c2)
-
-        return [self.gmm.model(orq1), self.gmm.model(orq2), self.gmm.model(orq3)]
+        cs = [np.array(ci) for ci in X_train]
+        models = [self.gmm.model(ci) for ci in cs]
+        return models
 
     def exec(self):
         models = self.models(self.X_train)
@@ -130,6 +121,15 @@ class Tester:
         result = self.comparator_with_impostor.sumary(self.X_test, self.y_test, models)
         return result
 
+    # def exec_sklearn(self):
+    #     self.X_train = np.concatenate(self.X_train)
+    #
+    #     self.y_train = np.concatenate(self.y_train)
+    #     classifier = GaussianMixture(n_components=10, covariance_type='diag')
+    #     classifier.fit(self.X_train, self.y_train)
+    #     y_pred = classifier.predict(self.X_test)
+    #     print(confusion_matrix(self.y_test, y_pred))
+    #     print(accuracy_score(self.y_test, y_pred))
 
 if __name__ == '__main__':
     t = Tester(Ng)
@@ -137,10 +137,12 @@ if __name__ == '__main__':
     print('------------------ Modelo sem impostors -----------------------')
     print('\n')
     t.plot(2, 0)
-    print('------------------ Modelo modelo BPS -----------------------')
-    print('\n')
-    t.plot(2, 1)
+    # print('------------------ Modelo modelo BPS -----------------------')
+    # print('\n')
+    # t.plot(2, 1)
     print('------------------ Modelo universal -----------------------')
     print('\n')
     t.plot(2, 2)
+    # print('------------------ GMM SKlearn -----------------------')
+    # t.exec_sklearn()
 

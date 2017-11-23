@@ -10,11 +10,28 @@ class Util:
 
 
     def gauss(self, x, u, e):
-        e += 0.3 * np.identity(len(e))
-        print('Deter %d ' % np.linalg.det(e))
-        self.plotIt(x, u, e)
-        res = multivariate_normal(u, e)
-        return res.pdf(x)
+        e += 0.0001 * np.identity(len(e))
+        try:
+            print('Deter %d ' % np.linalg.det(e))
+        except:
+            print(e)
+
+        pdf1 = multivariate_normal(u, e).pdf(x)
+        pdf2 = self.gaussian_pdf(u, e, x)
+
+        return pdf1
+
+        # res = multivariate_normal(u, e)
+        # return res.pdf(x)
+
+    def gaussian_pdf(self, u, e, x):
+
+        p2 = np.outer(x - u, x - u)
+        p1 = (x - u).T.dot((x - u))
+        aux2 = np.exp(-1/2 * p1)
+        aux1 = 1 / ((2*np.pi) ** 3/2)
+        return aux1 * aux2
+
 
     def weighted_gauss(self, x, m, u, e):
         return m * self.gauss(x, u, e)

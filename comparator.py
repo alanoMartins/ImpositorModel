@@ -79,6 +79,8 @@ class Comparator:
             best_class = self.find_best_class(data, models)
 
             accepts.append(best_class == target)
+            print("Best class: %d" % best_class)
+            print("Target target: %d" % target)
 
         return accepts
 
@@ -88,7 +90,7 @@ class Comparator:
         best_class = -1
         for c in range(0, len(models)):
             client = models[c]
-            p = util.sum_weighted_gauss(data, client)
+            p = util.get_prob(data, client)
             if p > best_p:
                 best_p = p
                 best_class = c

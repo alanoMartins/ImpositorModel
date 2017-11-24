@@ -11,10 +11,10 @@ class Util:
 
     def gauss(self, x, u, e):
         e += 0.0001 * np.identity(len(e))
-        try:
-            print('Deter %d ' % np.linalg.det(e))
-        except:
-            print(e)
+        # try:
+        #     print('Deter %d ' % np.linalg.det(e))
+        # except:
+        #     print(e)
 
         pdf1 = multivariate_normal(u, e).pdf(x)
         pdf2 = self.gaussian_pdf(u, e, x)

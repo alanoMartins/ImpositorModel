@@ -13,8 +13,8 @@ class GMM:
     def model(self, data):
         kmeans = KMeans(self.Ng)
         lamb = kmeans.exec(data)
-        #return lamb
-        return self.__maximum_likelihood(data, lamb)
+        return lamb
+        #return self.__maximum_likelihood(data, lamb)
 
     def __maximum_likelihood(self, X, lamb):
         for i in range(0, self.max_interation):
@@ -49,9 +49,9 @@ class GMM:
         for g in range(0, self.Ng):
             acc = []
             for i in range(0, len(X)):
-                s = np.outer(X[i] - mu[g], X[i] - mu[g]) * lgi[g][i]
+                s = np.outer(X[i], X[i]) * lgi[g][i]
                 acc.append(s)
-            r = safe_div(1, lg[g]) * sum(acc)
+            r = safe_div(1, lg[g]) * sum(acc) - np.outer(mu[g], mu[g])
             sigmas.append(r)
 
 

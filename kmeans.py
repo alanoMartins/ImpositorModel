@@ -63,7 +63,7 @@ class KMeans:
             r = safe_div(1, ng[g]) * sum(acc)
             sigmas.append(r)
 
-        sigmas1 = [safe_div(1, ng[g]) * np.cov((data - mu[g]).T) * np.identity(len(data[0])) for g in range(0, self.Ng)]
+        #sigmas = [safe_div(1, ng[g]) * np.cov((data - mu[g]).T) * np.identity(len(data[0])) for g in range(0, self.Ng)]
         sigmas = np.array(sigmas)
 
 

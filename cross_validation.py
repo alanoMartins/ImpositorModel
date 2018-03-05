@@ -45,7 +45,8 @@ class CrossValidation:
             filtered.append(aux)
         dataset = np.array(filtered)
 
-        dataset = [self.decomposer(d) for d in dataset]
+        #
+        # dataset = [self.decomposer(d) for d in dataset]
 
         n_interaction = [round(len(d) * self.test_size) for d in dataset]
 
